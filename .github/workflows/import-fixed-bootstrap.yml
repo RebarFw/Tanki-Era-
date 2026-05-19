@@ -1,0 +1,50 @@
+name: Import fixed bootstrap assets
+
+on:
+  push:
+    paths:
+      - .github/workflows/import-fixed-bootstrap.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-fixed-bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Download fixed assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          curl -L --fail --retry 5 --retry-delay 2 -X POST "https://temp.sh/Ykpkw/Prelauncher.swf" -o assets/Prelauncher.swf
+          curl -L --fail --retry 5 --retry-delay 2 -X POST "https://temp.sh/uhAWN/socket.cfg" -o assets/socket.cfg
+
+      - name: Verify fixed assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > assets.sha256 <<'EOF'
+          1434d07e0fbaec970e5ce84801aaf3d540a98d6586626bb0ab6e45a5b8953eca  assets/Prelauncher.swf
+          be94ea84258e11004d0c724b7f893a7b6a9ed5b97d10cffe2904f207404cb2ed  assets/socket.cfg
+          EOF
+          sha256sum -c assets.sha256
+          rm assets.sha256
+
+      - name: Commit fixed assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/Prelauncher.swf assets/socket.cfg
+          if git diff --cached --quiet; then
+            echo "No fixed asset changes to commit."
+            exit 0
+          fi
+          git commit -m "Fix bootstrap play launch parameters"
+          git push
