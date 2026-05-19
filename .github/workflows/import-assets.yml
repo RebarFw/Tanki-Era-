@@ -21,10 +21,10 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p assets
-          curl -L --fail --retry 5 --retry-delay 2 "https://temp.sh/WGLAn/Prelauncher.swf" -o assets/Prelauncher.swf
-          curl -L --fail --retry 5 --retry-delay 2 "https://temp.sh/jwCmu/Loader.swf" -o assets/Loader.swf
-          curl -L --fail --retry 5 --retry-delay 2 "https://temp.sh/DJigu/library.swf" -o assets/library.swf
-          curl -L --fail --retry 5 --retry-delay 2 "https://temp.sh/NWKQA/socket.cfg" -o assets/socket.cfg
+          curl -L --fail --retry 5 --retry-delay 2 -X POST "https://temp.sh/WGLAn/Prelauncher.swf" -o assets/Prelauncher.swf
+          curl -L --fail --retry 5 --retry-delay 2 -X POST "https://temp.sh/jwCmu/Loader.swf" -o assets/Loader.swf
+          curl -L --fail --retry 5 --retry-delay 2 -X POST "https://temp.sh/DJigu/library.swf" -o assets/library.swf
+          curl -L --fail --retry 5 --retry-delay 2 -X POST "https://temp.sh/NWKQA/socket.cfg" -o assets/socket.cfg
 
       - name: Verify assets
         shell: bash
