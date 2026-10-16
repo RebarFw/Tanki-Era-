@@ -1,6 +1,6 @@
 # Tanki Era
 
-[Download Tanki Era for Windows](https://github.com/RebarFw/Tanki-Era-/raw/refs/heads/main/downloads/Tanki-Era-GitHub-Client.zip)
+[Download Tanki Era for Windows](https://github.com/RebarFw/Tanki-Era-/raw/refs/heads/main/downloads/Tanki-Era.zip)
 
 Extract the ZIP and open **Tanki Era.exe**. The download contains one executable; the AIR runtime is built in. No installer, batch launcher, or separate runtime ZIP is needed.
 
