@@ -10,9 +10,14 @@ Version 2.0.1 replaces the detailed connection-failure prompt with **Server is o
 
 ## Current scan status
 
+The October 17, 2026 checks of the new 2.0.1 release report **2/66 for the ZIP** and **6/70 for the launcher executable**. These detections remain unresolved; this release is not represented as a zero-detection package. The separate game library remains at 0/61.
+
+- 2.0.1 executable: https://www.virustotal.com/gui/file/d5dc4366cd1f01a694331c255e6a656d6a93eecbcaff539905db533730d8224e
+- 2.0.1 ZIP: https://www.virustotal.com/gui/file/a662e4af6b01beb068bbb3c2137e6268fbaea1ba1f964cd2a1f6703313e83359
+
 The launcher is unsigned. The preceding 2.0.0.0 release's October 16, 2026 VirusTotal reports showed 7/71 detections for its executable and 2/67 for its outer ZIP. Those historical reports refer to the old hashes listed below and do not establish the new launcher's scan result. The library's 0/61 result is separate from the launcher and ZIP.
 
-An updated local Microsoft Defender custom scan of the exact ZIP, executable and bundled runtime found no threats using definitions 1.461.55.0. A source comparison matched all 52 managed method bodies and all embedded resources against a diagnostic rebuild. The main bundled AIR DLL has a valid Adobe Inc. signature. The captive AIR entry executable is unsigned and has an older Arctic Wolf detection of its own.
+For the preceding 2.0.0.0 release, a local Microsoft Defender custom scan of its exact ZIP, executable and bundled runtime found no threats using definitions 1.461.55.0. That release's source comparison matched all 52 managed method bodies and all embedded resources against a diagnostic rebuild. The main bundled AIR DLL has a valid Adobe Inc. signature. The captive AIR entry executable is unsigned and has an older Arctic Wolf detection of its own. These historical checks are not new scan results for 2.0.1.
 
 These checks support requesting vendor review; they do not establish universal safety or override another vendor's verdict. No antivirus exclusions, disabled protections, obfuscation, encryption of the payload, or cosmetic binary modifications are used to hide the file from scanners. The published executable and ZIP have not been changed to obtain a different hash.
 
