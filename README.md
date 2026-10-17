@@ -2,15 +2,17 @@
 
 [Download Tanki Era for Windows](https://github.com/RebarFw/Tanki-Era-/raw/refs/heads/main/downloads/Tanki-Era.zip)
 
-Extract the ZIP and open **Tanki Era.exe**. The download contains one executable; the AIR runtime is built in. No installer, batch launcher, or separate runtime ZIP is needed.
+Extract the entire ZIP, open the **Tanki Era** folder, and run **Tanki Era.exe**. Keep its runtime folders beside it. No installer, administrator access or batch launcher is needed.
 
-The launcher checks this repository each time it opens. It downloads only changed game files, verifies them, then starts the complete game version. Updates apply on the next launch. A verified saved version can be used if GitHub is temporarily unavailable.
+The launcher checks this repository when it opens. It downloads only changed game files, verifies them at one immutable GitHub commit, and activates a complete version. Updates apply on the next launch. If GitHub is temporarily unavailable, a previously verified version can still start.
 
-The game server must be online to play. Maps, textures and sounds come from the game server and stay in the local game cache. Launcher files are stored in `%LOCALAPPDATA%\TankiEraPlayer`; player resources remain in `%LOCALAPPDATA%\TankiEra\cache`.
+The game server must be online to play. When the required game connections are unavailable, the launcher shows **Server is offline** and one **OK** button. Technical details stay in the local launcher log. Initial downloads and integrity checks can take a little time.
 
-Launcher 2.0.1 displays **Server is offline** with one OK button when the required game connections are unavailable. Connection details stay in the local launcher log.
+Maps, textures and sounds still come from the game server and stay in the existing resource cache. Updater files are stored in `%LOCALAPPDATA%\TankiEraPlayer\air`. Previously downloaded game blobs can be reused after verification.
 
-The October 17, 2026 library update was tested in-game by the project owner and scanned at [0/61 on VirusTotal](https://www.virustotal.com/gui/file/6c2c9eb0856ee2cda3b0f5f3b43e4ae4475949a31054a047d23cf953074d36f4). This result applies to `library.swf`, not to the launcher executable or the complete ZIP; see [launcher review notes](launcher/README.md).
+The October 17, 2026 portable release replaces the custom .NET self-extracting wrapper with the unmodified AIR SDK entry point and a small source-visible AIR updater. The game assets and the owner-tested `library.swf` are unchanged. [Source, verification details and scan reports](launcher/README.md).
+
+Current release checks: [ZIP: 0/64](https://www.virustotal.com/gui/file/00187bd529c643d7d5c221eb2aa920e6a1219d0b8af699ed83a912e1f55946d8), [updater SWF: 0/58](https://www.virustotal.com/gui/file/a752c3b351fa6b2f0a189057080a01e633748b9ac301207c4aa3cdb655bda6a8), [game library: 0/61](https://www.virustotal.com/gui/file/6c2c9eb0856ee2cda3b0f5f3b43e4ae4475949a31054a047d23cf953074d36f4). These are point-in-time scan results, not a guarantee against every security issue. Runtime binaries are also checked separately because archive scanning has limitations.
 
 ## Publishing game updates
 
@@ -25,6 +27,6 @@ Update the required files in `assets` on `main`:
 - `communicator-news.png`
 - `socket.cfg` (public game endpoint only)
 
-Players receive changed assets automatically when they reopen Tanki Era. Keep related files in one commit when they depend on each other. The launcher pins each update to one GitHub commit and activates it only after all required files pass verification.
+Players receive changed assets when they reopen Tanki Era. Keep related files in one commit. The updater allows only these names, verifies Git blob hashes and local SHA-256 receipts, and stages the complete game before activation. Incomplete or corrupted updates cannot replace a verified saved version. It never downloads a native executable from the network.
 
-The repository contains public client files only. Do not upload server databases, admin configuration, passwords, tokens, or private keys.
+The repository contains public client files only. Do not upload server databases, admin configuration, passwords, tokens or private keys.

@@ -1,0 +1,100 @@
+[
+  {
+    "file": "zip",
+    "sha256": "00187bd529c643d7d5c221eb2aa920e6a1219d0b8af699ed83a912e1f55946d8",
+    "detections": 0,
+    "engines_reported": 64,
+    "date": "Sat Oct 17 2026 14:02:40 GMT+0200 (Central European Summer Time)",
+    "engine_states": {
+      "undetected": 64,
+      "timeout": 4,
+      "failure": 0,
+      "type-unsupported": 7
+    },
+    "url": "https://www.virustotal.com/gui/file/00187bd529c643d7d5c221eb2aa920e6a1219d0b8af699ed83a912e1f55946d8"
+  },
+  {
+    "file": "updater",
+    "sha256": "a752c3b351fa6b2f0a189057080a01e633748b9ac301207c4aa3cdb655bda6a8",
+    "detections": 0,
+    "engines_reported": 58,
+    "date": "Sat Oct 17 2026 14:02:31 GMT+0200 (Central European Summer Time)",
+    "engine_states": {
+      "undetected": 58,
+      "timeout": 2,
+      "failure": 2,
+      "type-unsupported": 13
+    },
+    "url": "https://www.virustotal.com/gui/file/a752c3b351fa6b2f0a189057080a01e633748b9ac301207c4aa3cdb655bda6a8"
+  },
+  {
+    "file": "native-exe",
+    "sha256": "03e67b6cd84650a56d6ed8f9a8c04de14c5660ecd715dc5cd4c7e8cf04acf886",
+    "detections": 0,
+    "engines_reported": 71,
+    "date": "Sat Oct 17 2026 14:17:25 GMT+0200 (Central European Summer Time)",
+    "engine_states": {
+      "undetected": 71,
+      "timeout": 0,
+      "failure": 0,
+      "type-unsupported": 4
+    },
+    "url": "https://www.virustotal.com/gui/file/03e67b6cd84650a56d6ed8f9a8c04de14c5660ecd715dc5cd4c7e8cf04acf886"
+  },
+  {
+    "file": "air-dll",
+    "sha256": "e5efca0b15127161f055826b89dbd115940f0748f025464cb94eaf0766b3a90e",
+    "detections": 0,
+    "engines_reported": 71,
+    "date": "Sat Oct 17 2026 14:17:25 GMT+0200 (Central European Summer Time)",
+    "engine_states": {
+      "undetected": 71,
+      "timeout": 0,
+      "failure": 0,
+      "type-unsupported": 4
+    },
+    "url": "https://www.virustotal.com/gui/file/e5efca0b15127161f055826b89dbd115940f0748f025464cb94eaf0766b3a90e"
+  },
+  {
+    "file": "npswf32",
+    "sha256": "b99a91d965af4e4941a26ae785713e12bb86f010d1adc6079bdd3ffdc896a69d",
+    "detections": 0,
+    "engines_reported": 71,
+    "date": "Sat Oct 17 2026 14:09:13 GMT+0200 (Central European Summer Time)",
+    "engine_states": {
+      "undetected": 71,
+      "timeout": 0,
+      "failure": 0,
+      "type-unsupported": 4
+    },
+    "url": "https://www.virustotal.com/gui/file/b99a91d965af4e4941a26ae785713e12bb86f010d1adc6079bdd3ffdc896a69d"
+  },
+  {
+    "file": "npswf64",
+    "sha256": "a6f05dc1f9e24e79dbdc87f35b57b9a49eab03b1ac057df0bae669a60fb24e60",
+    "detections": 0,
+    "engines_reported": 71,
+    "date": "Sat Oct 17 2026 14:10:55 GMT+0200 (Central European Summer Time)",
+    "engine_states": {
+      "undetected": 71,
+      "timeout": 0,
+      "failure": 0,
+      "type-unsupported": 4
+    },
+    "url": "https://www.virustotal.com/gui/file/a6f05dc1f9e24e79dbdc87f35b57b9a49eab03b1ac057df0bae669a60fb24e60"
+  },
+  {
+    "file": "webkit",
+    "sha256": "df04691727871b9b099a374cac70dd7e0808d992b6373b6fe6228107a5e224fb",
+    "detections": 0,
+    "engines_reported": 71,
+    "date": "Sat Oct 17 2026 14:11:09 GMT+0200 (Central European Summer Time)",
+    "engine_states": {
+      "undetected": 71,
+      "timeout": 0,
+      "failure": 0,
+      "type-unsupported": 4
+    },
+    "url": "https://www.virustotal.com/gui/file/df04691727871b9b099a374cac70dd7e0808d992b6373b6fe6228107a5e224fb"
+  }
+]

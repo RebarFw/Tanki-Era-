@@ -1,29 +1,46 @@
-# Tanki Era launcher source and review
+# Tanki Era portable launcher 3.1.0
 
-This is the exact C# source used for the 2.0.1.0 launcher. The companion runtime archive is the same embedded archive in the published executable; its hash is listed in ../SHA256SUMS.txt. The icon is included for rebuilding.
+The current download uses the original AIR SDK `CaptiveAppEntry.exe` bytes, named `Tanki Era.exe`, with the existing unpacked Adobe AIR runtime. Its executable sections match the earlier game entry point; the modified executable resource section and the custom .NET self-extracting wrapper are no longer shipped. The original valid Adobe signatures on the runtime DLLs are retained. The stock entry point is unsigned; no certificate trust changes or antivirus exclusions are used.
 
-The launcher checks only RebarFw/Tanki-Era- on GitHub, selects the allowed game assets at one immutable commit, verifies downloads, prepares a complete release in the user's local AppData folder, and starts the captive AIR game executable. It does not need administrator privileges or antivirus exclusions.
+`src/TankiEraLauncher.as` and `src/tanki/updater/*.as` are the complete updater source. There is no encrypted payload, hidden executable, native-code patch, shell command or arbitrary executable download. Runtime filenames and SHA-256 hashes are fixed in `vendor-manifest.json` and `RuntimeManifest.as`.
 
-Build with the Windows .NET Framework C# compiler using Build.ps1. A local build can differ in compiler timestamps and module identifiers, so a rebuild is not guaranteed to produce an identical whole-file hash.
+The updater selects one GitHub commit, reads the eight fixed game asset names, bounds each response to 100 MiB, verifies Git SHA-1 blob identifiers, normalizes the public endpoint configuration, and builds a separate complete game directory. Runtime files are copied locally only after verifying the fixed vendor hashes. Local version receipts and files are checked with SHA-256 before reuse. An update failure falls back only to an independently verified saved generation. The native game starts in its own process using the original game descriptor and identity.
 
-Version 2.0.1 replaces the detailed connection-failure prompt with **Server is offline** and one OK button. It keeps connection diagnostics in the local log. The automatic GitHub update, immutable revision checks, download verification and cached-release behavior are unchanged. The published game assets now include the owner-tested library whose SHA-256 is `6c2c9eb0856ee2cda3b0f5f3b43e4ae4475949a31054a047d23cf953074d36f4`.
+The game's SWFs and artwork are unchanged from the owner-tested October 17 build. Automated tests cover updater behavior, hashing, process lifetime and the offline screen; these tests do not substitute for a new player login/garage/battle playthrough in this packaging.
 
-## Current scan status
+## Verification
 
-The October 17, 2026 checks of the new 2.0.1 release report **2/66 for the ZIP** and **6/70 for the launcher executable**. These detections remain unresolved; this release is not represented as a zero-detection package. The separate game library remains at 0/61.
+- 30 digest checks, including SHA-1/SHA-256 boundary cases and the complete 50,239,295-byte game library.
+- 40 updater checks with inert fixtures: first update, unchanged launch, metadata-only commits, changed-library update, verified offline fallback, corrupted download/cache/runtime, incomplete versions and unsafe endpoint/pointer rejection.
+- 65 checks of the real package and real GitHub assets. The published library remains byte-identical to SHA-256 `6c2c9eb0856ee2cda3b0f5f3b43e4ae4475949a31054a047d23cf953074d36f4`.
+- The actual portable updater prepared the current public GitHub release and passed game, Flash policy and resource connection checks.
+- A stock-runtime child process continued after its updater parent exited.
+- The exact updater UI classes displayed only `Server is offline` and `OK` against an isolated unavailable endpoint.
+- Microsoft Defender scanned the package without remediation and reported no threats.
 
-- 2.0.1 executable: https://www.virustotal.com/gui/file/d5dc4366cd1f01a694331c255e6a656d6a93eecbcaff539905db533730d8224e
-- 2.0.1 ZIP: https://www.virustotal.com/gui/file/a662e4af6b01beb068bbb3c2137e6268fbaea1ba1f964cd2a1f6703313e83359
+## Scan reports
 
-The launcher is unsigned. The preceding 2.0.0.0 release's October 16, 2026 VirusTotal reports showed 7/71 detections for its executable and 2/67 for its outer ZIP. Those historical reports refer to the old hashes listed below and do not establish the new launcher's scan result. The library's 0/61 result is separate from the launcher and ZIP.
+- [Current ZIP: 0/64](https://www.virustotal.com/gui/file/00187bd529c643d7d5c221eb2aa920e6a1219d0b8af699ed83a912e1f55946d8)
+- [Current updater SWF: 0/58](https://www.virustotal.com/gui/file/a752c3b351fa6b2f0a189057080a01e633748b9ac301207c4aa3cdb655bda6a8)
+- [Stock native entry point](https://www.virustotal.com/gui/file/03e67b6cd84650a56d6ed8f9a8c04de14c5660ecd715dc5cd4c7e8cf04acf886)
+- [Adobe AIR.dll](https://www.virustotal.com/gui/file/e5efca0b15127161f055826b89dbd115940f0748f025464cb94eaf0766b3a90e)
+- [NPSWF32.dll](https://www.virustotal.com/gui/file/b99a91d965af4e4941a26ae785713e12bb86f010d1adc6079bdd3ffdc896a69d)
+- [NPSWF64.dll](https://www.virustotal.com/gui/file/a6f05dc1f9e24e79dbdc87f35b57b9a49eab03b1ac057df0bae669a60fb24e60)
+- [WebKit.dll](https://www.virustotal.com/gui/file/df04691727871b9b099a374cac70dd7e0808d992b6373b6fe6228107a5e224fb)
+- [Unchanged game library: 0/61](https://www.virustotal.com/gui/file/6c2c9eb0856ee2cda3b0f5f3b43e4ae4475949a31054a047d23cf953074d36f4)
 
-For the preceding 2.0.0.0 release, a local Microsoft Defender custom scan of its exact ZIP, executable and bundled runtime found no threats using definitions 1.461.55.0. That release's source comparison matched all 52 managed method bodies and all embedded resources against a diagnostic rebuild. The main bundled AIR DLL has a valid Adobe Inc. signature. The captive AIR entry executable is unsigned and has an older Arctic Wolf detection of its own. These historical checks are not new scan results for 2.0.1.
+Scan results apply only to their exact hashes and analysis dates. VirusTotal warns that a multi-file archive above its extraction limits may not receive complete per-file inspection, so native binaries and the updater are reviewed individually as well. A zero-detection report is not proof that legacy AIR/Flash has no vulnerabilities. The retained runtime still needs a separate compatibility-tested upgrade before claiming modern runtime security support.
 
-These checks support requesting vendor review; they do not establish universal safety or override another vendor's verdict. No antivirus exclusions, disabled protections, obfuscation, encryption of the payload, or cosmetic binary modifications are used to hide the file from scanners. The published executable and ZIP have not been changed to obtain a different hash.
+Previous 2.0.1 packages had unresolved detections. They are superseded by this release; their source and artifacts remain in Git history for auditability. No history has been rewritten, and no antivirus vendor report has been suppressed.
 
-Reports:
+## Build
 
-- Executable: https://www.virustotal.com/gui/file/29eefcd4e2aa317aa67e82e13824238ddd61a8ac6bdcf25693e6d430e96a9471/detection
-- ZIP: https://www.virustotal.com/gui/file/995e0a1f8979c0cc35e4e4e357345e9e9af980c9a0a62729c50208b449acbbda/detection
+Use Python 3, Java and a trusted local AIR/Flex compiler SDK that provides `com.adobe.flash.compiler.clients.MXMLC` and `airglobal.swc`. The tested compiler classpath includes `guava-compiler.jar` and `commons-io-2.11.0.jar`; these developer tools are not distributed to players. Supply the current public release ZIP as the source of the byte-verified vendor runtime:
 
-No vendor reevaluation request has been submitted. A trusted code-signing certificate is required for a signed release; the build script can use an existing trusted signing certificate. It does not create certificates or alter certificate trust. Signing identifies the publisher and does not guarantee a zero-detection scan.
+```powershell
+python launcher/build.py --sdk C:/Tools/AIR --java C:/Tools/Java/bin/java.exe --base-zip downloads/Tanki-Era.zip --output out
+```
+
+The builder copies only fixed allowlisted vendor files, checks their hashes, compiles the supplied source, and writes `out/Tanki era.zip`. It does not run any extracted or downloaded executable. Use an empty output directory. A different compiler/SDK can produce a different SWF; scan and test that exact output before publishing.
+
+A rebuild from the published source was also decompiled and compared with the scanned updater: all seven classes matched exactly. MXMLC can reorder scripts and constant pools when source paths differ, so this is a semantic source check rather than a promise of identical SWF file hashes. The download remains the exact scanned ZIP.
