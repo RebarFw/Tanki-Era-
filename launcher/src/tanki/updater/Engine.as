@@ -92,8 +92,10 @@ package tanki.updater {
   private static function validHost(host:String):Boolean{host=host.toLowerCase();return host.length<=253&&/^[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?$/.test(host)&&host!="localhost"&&host!="0.0.0.0"&&host.indexOf("127.")!=0&&host.indexOf("..")<0;}
   public static function descriptor(config:Object):String{
    var doc:XML=new XML(RuntimeManifest.GAME_DESCRIPTOR);var ns:Namespace=doc.namespace();
+   doc.ns::id="TankiEraPlayerGame";
    doc.ns::filename="Tanki Era";doc.ns::name="Tanki Era";doc.ns::initialWindow.ns::title="Tanki Era";
-   doc.ns::initialWindow.ns::content="StandaloneLoader.swf?resources="+encodeURIComponent(String(config.resources)+"/resource")+"&prelauncher=Prelauncher.swf&locale=en&library=library.swf&lang=en&swf=Loader.swf&socket=socket.cfg";
+   doc.ns::initialWindow.ns::content="META-INF/AIR/GameEntry.swf";
+   doc.ns::initialWindow.ns::visible="false";
    return '<?xml version="1.0" encoding="utf-8"?>\n'+doc.toXMLString();
   }
   private function finishAssets():void{
