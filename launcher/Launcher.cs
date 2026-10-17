@@ -20,7 +20,7 @@ using System.Xml;
 [assembly: AssemblyTitle("Tanki Era")]
 [assembly: AssemblyProduct("Tanki Era")]
 [assembly: AssemblyCompany("Tanki Era")]
-[assembly: AssemblyVersion("2.0.0.0")]
+[assembly: AssemblyVersion("2.0.1.0")]
 
 public sealed class Asset {
     public string name { get; set; }
@@ -262,11 +262,9 @@ public sealed class LauncherWindow : Form {
                 label.Text = "Checking the game server...";
                 string connection = await ConnectionCheck.Run(game);
                 updater.Log(connection);
-                if (connection.Contains("FAILED") && MessageBox.Show(connection +
-                    "\n\nThe game files are ready, but a server connection failed. The host must keep the server running." +
-                    "\nSend the host launcher.log. Re-downloading the game will not open a blocked port." +
-                    "\n\nTry opening the game anyway?", "Tanki Era connection check",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) { Close(); return; }
+                if (connection.Contains("FAILED")) {
+                    ConnectionCheck.ShowOffline(); Close(); return;
+                }
                 Process.Start(new ProcessStartInfo(Path.Combine(game, "Tanki Era.exe")) { WorkingDirectory = game, UseShellExecute = false });
                 Close();
             } catch (Exception ex) {
@@ -299,6 +297,9 @@ public sealed class LauncherWindow : Form {
 }
 
 public static class ConnectionCheck {
+    public static void ShowOffline() {
+        MessageBox.Show("Server is offline", "Tanki Era", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
     public static async Task<string> Probe(string host, int port, string name) {
         try {
             using (var socket = new TcpClient()) {
