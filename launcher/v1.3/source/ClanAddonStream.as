@@ -45,7 +45,9 @@ package {
     });
     ref.addEventListener(IOErrorEvent.IO_ERROR,function(e:Event):void { trace("Clan release lookup failed"); });
     ref.addEventListener(SecurityErrorEvent.SECURITY_ERROR,function(e:Event):void { trace("Clan release lookup failed"); });
-    ref.load(new URLRequest("https://api.github.com/repos/RebarFw/Tanki-Era-/git/ref/heads/main?update="+new Date().time));
+    var request:URLRequest = new URLRequest("https://api.github.com/repos/RebarFw/Tanki-Era-/git/ref/heads/main?update="+new Date().time);
+    request.useCache = false;request.cacheResponse = false;
+    ref.load(request);
    }
   }
   private function savedRevision():String {

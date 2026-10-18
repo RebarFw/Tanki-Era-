@@ -186,7 +186,10 @@ package protanki.launcher
          releaseLoader.addEventListener("complete",this.onReleaseResolved);
          releaseLoader.addEventListener("ioError",this.onLoadingError);
          releaseLoader.addEventListener("securityError",this.onLoadingError);
-         releaseLoader.load(new URLRequest(this.cacheBust("https://api.github.com/repos/RebarFw/Tanki-Era-/git/ref/heads/main")));
+         var releaseRequest:URLRequest = new URLRequest(this.cacheBust("https://api.github.com/repos/RebarFw/Tanki-Era-/git/ref/heads/main"));
+         releaseRequest.useCache = false;
+         releaseRequest.cacheResponse = false;
+         releaseLoader.load(releaseRequest);
       }
 
       private function onReleaseResolved(event:Event) : void
