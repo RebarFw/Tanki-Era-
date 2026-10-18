@@ -1,6 +1,6 @@
 """Rebuild only cache buckets whose registered public resource bytes changed."""
 from __future__ import annotations
-import hashlib,json,os,pathlib,struct,uuid
+import hashlib,json,os,pathlib,struct,uuid,time,re
 from publish import canonical,sha,validate_cache
 
 EXTENSIONS={'jpg','jpeg','xml','3ds','tara','swf','png','tnk','json','mp3'}
@@ -8,7 +8,13 @@ EXTENSIONS={'jpg','jpeg','xml','3ds','tara','swf','png','tnk','json','mp3'}
 def atomic(path,data):
     path=pathlib.Path(path);path.parent.mkdir(parents=True,exist_ok=True)
     temporary=path.with_name(path.name+'.'+uuid.uuid4().hex+'.tmp')
-    try:temporary.write_bytes(data);os.replace(temporary,path)
+    try:
+        temporary.write_bytes(data)
+        for attempt in range(20):
+            try:os.replace(temporary,path);break
+            except PermissionError:
+                if attempt==19:raise
+                time.sleep(.025)
     finally:
         if temporary.exists():temporary.unlink()
 
@@ -64,11 +70,24 @@ def activate(source_root,runtime_root,candidate):
     source_root=pathlib.Path(source_root);runtime_root=pathlib.Path(runtime_root);candidate=pathlib.Path(candidate)
     payload=(candidate/'manifest.json').read_bytes();manifest=json.loads(payload);digest=hashlib.sha256(payload).hexdigest()
     assert (candidate/'manifest.sha256').read_text().strip()==digest
+    receipt=json.loads((candidate/'publication.json').read_bytes())
+    manifest_url=receipt['manifest_download_url']
+    assert re.fullmatch(r'https://github\.com/RebarFw/Tanki-Era-/releases/download/resource-cache-v[0-9]+/manifest-'+digest+r'\.json',manifest_url)
+    redirects={p['path']:p['url']for p in manifest['packages'].values()}
+    for p in manifest['packages'].values():
+        assert re.fullmatch(r'https://github\.com/RebarFw/Tanki-Era-/releases/download/resource-cache-v[0-9]+/'+p['sha256']+r'\.tpk',p['url'])
+    redirects.update({'manifest-'+digest+'.json':manifest_url,'manifest-'+digest+'.sha256':manifest_url.replace('.json','.sha256'),
+        'manifest.json':manifest_url,'manifest.sha256':manifest_url.replace('.json','.sha256')})
     # Content is installed before either active pointer moves. Older snapshots
     # and bundle names are retained so in-flight/reconnecting clients stay valid.
     for root in [source_root,runtime_root]:
         root.mkdir(parents=True,exist_ok=True)
         snapshot(root,payload)
+        index=root/'github-downloads.properties';retained={}
+        if index.exists():
+            retained=dict(line.split('=',1)for line in index.read_text().splitlines()if '='in line)
+        retained.update(redirects)
+        atomic(index,(''.join(key+'='+value+'\n'for key,value in sorted(retained.items()))).encode())
         for package in manifest['packages'].values():
             target=root/package['path'];source=source_root/package['path']
             if target.resolve()!=source.resolve()and (not target.exists()or sha(target)!=package['sha256']):atomic(target,source.read_bytes())

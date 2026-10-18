@@ -5,6 +5,8 @@ package tanki.cache {
  import flash.events.SecurityErrorEvent;
  import flash.events.TimerEvent;
  import flash.net.URLRequest;
+ import flash.net.URLLoader;
+ import flash.net.URLLoaderDataFormat;
  import flash.net.URLStream;
  import flash.utils.ByteArray;
  import flash.utils.Timer;
@@ -12,10 +14,46 @@ package tanki.cache {
 
  public class ReleaseTransport {
   private static const IDLE_TIMEOUT_MS:int=45000;
-  private static var counters:Object={githubStarted:0,githubCompleted:0,fallbackStarted:0,fallbackCompleted:0,failed:0,bytes:0};
+  private static var counters:Object={githubStarted:0,githubCompleted:0,manifestStarted:0,manifestCompleted:0,fallbackStarted:0,fallbackCompleted:0,failed:0,bytes:0};
   private static var recent:Array=[];
 
   public static function get statistics():Object { return {counters:counters,recent:recent.concat()}; }
+
+  private static function isManifest(url:String):Boolean {
+   return /^https:\/\/github\.com\/RebarFw\/Tanki-Era-\/releases\/download\/resource-cache-v[0-9]+\/manifest-[0-9a-f]{64}\.json$/.test(url);
+  }
+  public static function cacheBase(url:String):String {
+   var marker:int=url.indexOf("#cache-origin=");
+   if(marker>=0 && isManifest(url.substr(0,marker))) {
+    var origin:String=decodeURIComponent(url.substr(marker+14));
+    if(!/^https?:\/\/[^?#]+\/$/.test(origin))throw new Error("Invalid local cache identity");
+    return origin;
+   }
+   return url.substr(0,url.lastIndexOf("/")+1);
+  }
+  public static function manifest(url:String,done:Function,failed:Function):void {
+   url=url.split("#")[0];
+   if(!isManifest(url)){failed("Resource manifest must be hosted on GitHub Releases");return;}
+   var loader:URLLoader=new URLLoader();loader.dataFormat=URLLoaderDataFormat.BINARY;
+   var timer:Timer=new Timer(IDLE_TIMEOUT_MS,1);var finished:Boolean=false;
+   var cleanup:Function;var reject:Function;var progress:Function;var received:Function;var errored:Function;var timeout:Function;
+   cleanup=function():void {
+    timer.stop();timer.removeEventListener(TimerEvent.TIMER_COMPLETE,timeout);
+    loader.removeEventListener(ProgressEvent.PROGRESS,progress);loader.removeEventListener(Event.COMPLETE,received);
+    loader.removeEventListener(IOErrorEvent.IO_ERROR,errored);loader.removeEventListener(SecurityErrorEvent.SECURITY_ERROR,errored);
+    try{loader.close();}catch(ignore:Error){}
+   };
+   reject=function(message:String):void {if(finished)return;finished=true;cleanup();counters.failed++;failed(message);};
+   progress=function(event:ProgressEvent):void {if(event.bytesLoaded>16777216){reject("Resource manifest exceeds maximum size");return;}timer.reset();timer.start();};
+   received=function(event:Event):void {if(finished)return;finished=true;cleanup();counters.manifestCompleted++;done(loader.data as ByteArray);};
+   errored=function(event:Event):void {reject("GitHub resource manifest download failed");};
+   timeout=function(event:TimerEvent):void {reject("GitHub resource manifest download stalled");};
+   counters.manifestStarted++;
+   loader.addEventListener(ProgressEvent.PROGRESS,progress);loader.addEventListener(Event.COMPLETE,received);
+   loader.addEventListener(IOErrorEvent.IO_ERROR,errored);loader.addEventListener(SecurityErrorEvent.SECURITY_ERROR,errored);
+   timer.addEventListener(TimerEvent.TIMER_COMPLETE,timeout);timer.start();
+   try{loader.load(new URLRequest(url));}catch(error:Error){reject(error.toString());}
+  }
 
   public static function download(cache:Object,fallbackUrl:String,done:Function,failed:Function,info:Object):void {
    var primary:String=info!=null && info.url!=null ? String(info.url) : "";
@@ -25,6 +63,7 @@ package tanki.cache {
    var attempt:Function;
    if(!/^[0-9a-f]{64}$/.test(expected) || size<0 || size>2147483647) {failed("Invalid package metadata");return;}
    var validPrimary:Boolean=new RegExp("^https://github\\.com/RebarFw/Tanki-Era-/releases/download/resource-cache-v[0-9]+/"+expected+"\\.tpk$").test(primary);
+   if(!validPrimary){failed("Resource package must be hosted on GitHub Releases");return;}
 
    attempt=function(url:String,isPrimary:Boolean):void {
     var input:URLStream=new URLStream();
@@ -58,7 +97,6 @@ package tanki.cache {
      if(complete || finished)return;
      complete=true;cleanup();
      if(target!=null)try {if(target.exists)target.deleteFile();}catch(ignore:Error){}
-     if(isPrimary) {attempt(fallbackUrl,false);return;}
      finished=true;counters.failed++;failed(message);
     };
     drain=function():void {
@@ -99,7 +137,7 @@ package tanki.cache {
      input.load(new URLRequest(url));
     }catch(error:Error){reject(error.toString());}
    };
-   attempt(validPrimary ? primary : fallbackUrl,validPrimary);
+   attempt(primary,true);
   }
  }
 }

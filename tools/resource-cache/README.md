@@ -6,13 +6,21 @@ is never overwritten. New manifests reference existing assets for unchanged
 bundles. Releases roll over before the 1,000-asset limit; older assets remain
 available for old manifests and rollback.
 
-The game server serves a small immutable control manifest and its active digest.
-The game client keeps its original cache namespace, object hashes, receipts,
-package verification, and local resource URLs. Package `url` fields select
-GitHub; unchanged `path` fields remain the original server fallback. The client
-tries the fallback only after primary transfer/integrity failure and cancels a
-stalled stream after 45 seconds without progress. Original global fallback
-limits remain two public streams at 256 KiB/s each.
+Manifests and all cache bundles download exclusively from GitHub Releases. The
+game connection supplies the immutable manifest URL and its expected SHA-256.
+A URL fragment carries the original local cache identity and is stripped before
+HTTP, preserving verified objects and receipts already on players' computers.
+Package `url` fields select GitHub. Relative `path` fields remain local authoring
+identifiers, not a client fallback. HTTP/stall/integrity failures stop the cache
+operation; they never download cache data from the game server. Streams stop
+after 45 seconds without progress.
+
+The server intercepts all `/assets/resource-cache/` responses before sending
+file content. Published legacy paths return empty HTTP 302 responses to verified
+GitHub URLs; unknown paths return empty 404 responses. Case, encoded, and dot
+path variants are normalized. This applies to both resource ports and loopback.
+Local source copies remain available for publishing and rollback, but are not
+served as cache payloads. Other HTTP resources retain their existing rate limits.
 
 ## Automatic publication on this host
 
@@ -31,8 +39,12 @@ waits for 20 seconds of stability, and then:
    upload budget. Existing Git credentials are used in memory; none are embedded
    in game files or receipts.
 4. Verifies new public downloads without credentials, publishes a hash-named
-   manifest/checksum, installs immutable local snapshots and fallback files,
+   manifest/checksum, installs immutable local snapshots and redirect mappings,
    and only then atomically replaces `active-release.sha256`.
+
+The idle watcher owns a separate lock from actual publication jobs, so an explicit
+publication can run immediately while the watcher is idle. Publications serialize
+against one another, and disabling the publisher also prevents final activation.
 
 The developer's `Distribution/Tools/Publish-Game-Update.ps1` also runs this stage
 before publishing a game library. Resource-only updates do not require a client
@@ -57,9 +69,10 @@ resource-byte, new registered resource, or map updates.
 ## Rollback
 
 Disable `resource-publication/enabled.json` first. To roll back a resource release,
-atomically restore a previous known digest to `active-release.sha256` in both
+atomically restore a previous published GitHub digest to `active-release.sha256` in both
 `src/main/resources/data/assets/resource-cache/v1` and `build/data/assets/resource-cache/v1`.
-Keep its `manifest-<digest>.json` and referenced hash bundles. Existing clients
+Keep its `manifest-<digest>.json`, verified GitHub URLs in `github-downloads.properties`,
+and referenced hash bundles. Existing clients
 can continue their current generation; reconnects receive the restored one.
 No database, account, or gameplay setting is involved.
 

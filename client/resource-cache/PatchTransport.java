@@ -15,13 +15,41 @@ class PatchTransport {
   var helper=new ABC(new DoABC2Tag(swf));var index=swf.getAbcIndex();index.selectAbc(helper);
   new ActionScript3Parser(index).addScript(Files.readString(work.resolve("ReleaseTransport.as")),"ReleaseTransport.as",0,0,swf.getDocumentClass(),helper);
   index.selectAbc(null);Files.write(work.resolve("helper-abc.bin"),bytes(helper));a.mergeABC(helper);index.refreshAbc(a);
-  int helperClass=-1,download=-1;
+  int helperClass=-1,download=-1,cacheBase=-1,manifest=-1,configureBody=-1,loadManifestBody=-1;
+  for(int i=0;i<a.instance_info.size();i++)if(type(a,i).equals("tanki.cache.ResourceManager"))
+   for(var trait:a.instance_info.get(i).instance_traits.traits)if(trait instanceof TraitMethodGetterSetter method) {
+    if(name(a,trait.name_index).equals("configure"))configureBody=a.findBodyIndex(method.method_info);
+    if(name(a,trait.name_index).equals("loadManifest"))loadManifestBody=a.findBodyIndex(method.method_info);
+   }
   for(int i=0;i<a.instance_info.size();i++)if(type(a,i).equals("tanki.cache.ReleaseTransport")){
    helperClass=a.instance_info.get(i).name_index;
-   for(var t:a.class_info.get(i).static_traits.traits)if(name(a,t.name_index).equals("download"))download=t.name_index;
+   for(var t:a.class_info.get(i).static_traits.traits) {
+    if(name(a,t.name_index).equals("download"))download=t.name_index;
+    if(name(a,t.name_index).equals("cacheBase"))cacheBase=t.name_index;
+    if(name(a,t.name_index).equals("manifest"))manifest=t.name_index;
+   }
   }
-  if(helperClass<0||download<0)throw new AssertionError("Transport helper absent");
+  if(helperClass<0||download<0||cacheBase<0||manifest<0||configureBody<0||loadManifestBody<0)throw new AssertionError("Transport helper/cache methods absent");
   int changed=0;
+  var configuration=a.bodies.get(configureBody);int identityChanges=0;
+  for(var instruction:configuration.getCode().code.toArray(new AVM2Instruction[0]))
+   if(Set.of("setproperty","initproperty").contains(instruction.definition.instructionName)&&name(a,instruction.operands[0]).equals("base")) {
+    // Replace only the computed base on the operand stack; retain the exact
+    // original DiskCache identity hash and all object/receipt validation.
+    int at=configuration.getCode().code.indexOf(instruction);
+    configuration.insertAll(at,List.of(op(0x29),op(0x60,helperClass),op(0xd1),op(0x46,cacheBase,1)));
+    configuration.max_stack+=2;identityChanges++;
+   }
+  if(identityChanges!=1)throw new AssertionError("Unexpected cache identity assignment");
+  configuration.setCodeBytes(configuration.getCode().getBytes());configuration.getCode().checkValidOffsets(configuration);changed++;
+  var loading=a.bodies.get(loadManifestBody);int manifestChanges=0;
+  var instructions=loading.getCode().code;
+  for(int i=0;i<instructions.size();i++)if(instructions.get(i).definition.instructionName.equals("callpropvoid")&&name(a,instructions.get(i).operands[0]).equals("download")) {
+   if(i<6||!instructions.get(i-6).definition.instructionName.equals("getlocal0"))throw new AssertionError("Unexpected manifest download stack");
+   loading.replaceInstruction(i-6,op(0x60,helperClass));loading.replaceInstruction(i,op(0x4f,manifest,3));manifestChanges++;
+  }
+  if(manifestChanges!=1)throw new AssertionError("Unexpected manifest download calls");
+  loading.setCodeBytes(loading.getCode().getBytes());loading.getCode().checkValidOffsets(loading);changed++;
   for(int b=0;b<original.size();b++) {
    var body=a.bodies.get(b);var code=body.getCode().code;
    for(int i=0;i<code.size();i++)if(code.get(i).definition.instructionName.equals("callpropvoid")&&name(a,code.get(i).operands[0]).equals("downloadTemporary")) {
@@ -36,9 +64,9 @@ class PatchTransport {
   }
   int preserved=0;
   for(int i=0;i<original.size();i++)if(Arrays.equals(original.get(i),a.bodies.get(i).getCodeBytes()))preserved++;
-  if(changed!=1||preserved!=original.size()-1)throw new AssertionError("Unexpected original method changes");
+  if(changed!=3||preserved!=original.size()-3)throw new AssertionError("Unexpected original method changes");
   Files.write(work.resolve("patched-abc.bin"),bytes(a));
-  Files.writeString(work.resolve("abc-verification.json"),"{\"tag_index\":"+tagIndex+",\"changed_original_methods\":1,\"other_original_methods_in_cache_tag_preserved\":"+preserved+",\"cache_directory_identity_unchanged\":true,\"gameplay_methods_unchanged\":true,\"branch_offsets_valid\":true}\n");
-  System.out.println("RELEASE_CACHE_TRANSPORT_BUILT original_methods_changed=1 cache_identity_and_gameplay_preserved=true");System.exit(0);
+  Files.writeString(work.resolve("abc-verification.json"),"{\"tag_index\":"+tagIndex+",\"changed_original_methods\":3,\"other_original_methods_in_cache_tag_preserved\":"+preserved+",\"cache_directory_identity_unchanged\":true,\"github_only\":true,\"gameplay_methods_unchanged\":true,\"branch_offsets_valid\":true}\n");
+  System.out.println("RELEASE_CACHE_TRANSPORT_BUILT original_methods_changed=3 github_only=true cache_identity_and_gameplay_preserved=true");System.exit(0);
  }
 }

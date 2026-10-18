@@ -20,8 +20,9 @@ The v1.3 bootstrap files are included in the ZIP. The older bootstrap assets and
 
 The client downloads verified resource bundles from [GitHub Releases](https://github.com/RebarFw/Tanki-Era-/releases/tag/resource-cache-v1).
 Bundles are content-addressed and players reuse local verified files, downloading
-only missing or changed content. A bounded original-server fallback remains for
-release-hosting failures. The game server supplies immutable control manifests;
+only missing or changed content. Manifests and bundles are hosted only on GitHub,
+with no game-server cache fallback. Legacy cache URLs redirect without sending
+bundle bytes. The game connection supplies the verified GitHub manifest URL;
 accounts and battle traffic stay on the game connection.
 
 See [resource publication](tools/resource-cache/README.md) and

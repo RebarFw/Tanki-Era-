@@ -1,4 +1,4 @@
-import copy,hashlib,json,pathlib,struct,tempfile,unittest
+import copy,hashlib,json,pathlib,struct,tempfile,unittest,subprocess,sys
 from publish import canonical,validate_cache
 from refresh import refresh,activate,snapshot,atomic
 
@@ -9,7 +9,8 @@ def bundle(root,name,resources):
             rows.append(dict(path=key.replace(':','/')+'/'+filename,sha256=hashlib.sha256(data).hexdigest(),size=len(data),offset=len(payload)));payload.extend(data)
     header=canonical(dict(format=1,files=rows));binary=b'TEPK\x01'+struct.pack('>I',len(header))+header+payload
     digest=hashlib.sha256(binary).hexdigest();path='packages/'+digest+'.tpk';atomic(root/path,binary)
-    return dict(group='core',path=path,resources=list(resources),sha256=digest,size=len(binary),version=digest)
+    return dict(group='core',path=path,resources=list(resources),sha256=digest,size=len(binary),version=digest,
+        url='https://github.com/RebarFw/Tanki-Era-/releases/download/resource-cache-v1/'+digest+'.tpk')
 
 class Pipeline(unittest.TestCase):
     def setUp(self):
@@ -56,13 +57,30 @@ class Pipeline(unittest.TestCase):
     def test_activation_installs_content_before_pointer_and_preserves_rollback(self):
         candidate=self.home/'candidate';candidate.mkdir();m=copy.deepcopy(self.manifest);m['version']='published';data=canonical(m)
         atomic(candidate/'manifest.json',data);atomic(candidate/'manifest.sha256',(hashlib.sha256(data).hexdigest()+'\n').encode())
+        url='https://github.com/RebarFw/Tanki-Era-/releases/download/resource-cache-v1/manifest-'+hashlib.sha256(data).hexdigest()+'.json'
+        atomic(candidate/'publication.json',json.dumps(dict(manifest_download_url=url)).encode())
         runtime=self.home/'runtime';new_sha=activate(self.cache,runtime,candidate)
         for root in [self.cache,runtime]:
             self.assertEqual((root/'active-release.sha256').read_text().strip(),new_sha)
             self.assertEqual((root/('manifest-'+new_sha+'.json')).read_bytes(),data);validate_cache(root)
+            redirects=dict(line.split('=',1)for line in (root/'github-downloads.properties').read_text().splitlines())
+            self.assertEqual(redirects['manifest-'+new_sha+'.json'],url)
+            for p in m['packages'].values():self.assertEqual(redirects[p['path']],p['url'])
         self.assertTrue((self.cache/('manifest-'+self.old_sha+'.json')).is_file())
     def test_immutable_snapshot_cannot_be_overwritten(self):
         path=self.cache/('manifest-'+self.old_sha+'.json');path.write_bytes(b'bad')
         with self.assertRaises(AssertionError):snapshot(self.cache,canonical(self.manifest))
+    def test_explicit_noop_publication_runs_while_watcher_idle_and_preserves_pid(self):
+        from auto_publish import exclusive,signature
+        runtime=self.home/'server';home=runtime/'resource-publication';home.mkdir(parents=True)
+        atomic(home/'enabled.json',b'{"enabled":true}')
+        atomic(home/'publisher.pid',b'watcher-owner\n')
+        atomic(home/'state.json',json.dumps(dict(signature=signature(runtime/'src/main/resources/data'))).encode())
+        with exclusive(home/'watcher.lock')as locked:
+            self.assertTrue(locked)
+            result=subprocess.run([sys.executable,str(pathlib.Path(__file__).with_name('auto_publish.py')),'--runtime',str(runtime),'--once'],capture_output=True,text=True,timeout=10)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertIn('already published and active',result.stdout)
+        self.assertEqual((home/'publisher.pid').read_bytes(),b'watcher-owner\n')
 
 if __name__=='__main__':unittest.main()

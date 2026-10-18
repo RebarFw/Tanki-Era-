@@ -7,4 +7,4 @@
 +  fun packageManifestSha(): String = resourceManager.get("assets/resource-cache/v1/active-release.sha256").toFile().readText().trim()
 @@ -1146 +1146 @@
 -      Command(CommandName.PrepareResourceCache,clientBaseUrl+"assets/resource-cache/v1/manifest.json",sha,scope,ticket.id).send(this)
-+      Command(CommandName.PrepareResourceCache,clientBaseUrl+"assets/resource-cache/v1/manifest-$sha.json",sha,scope,ticket.id).send(this)
++      Command(CommandName.PrepareResourceCache,jp.assasans.protanki.server.resources.ResourceCacheHosting.manifestUrl(clientBaseUrl,sha),sha,scope,ticket.id).send(this)

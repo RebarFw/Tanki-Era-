@@ -194,7 +194,7 @@ def main():
         assert row['size']==p['size']
         p['url']=row['browser_download_url']
         assert p['url'].startswith('https://github.com/'+REPOSITORY+'/releases/download/resource-cache-v')
-    candidate['transport']={'format':1,'primary':'github-releases','fallback':'original-rate-limited-server'}
+    candidate['transport']={'format':1,'primary':'github-releases','mode':'github-only','fallback':None}
     candidate['version']=hashlib.sha256(canonical({k:v for k,v in candidate.items()if k!='version'})).hexdigest()
     payload=canonical(candidate);digest=hashlib.sha256(payload).hexdigest()
     manifest_file=out/('manifest-'+digest+'.json');manifest_file.write_bytes(payload)
@@ -205,7 +205,9 @@ def main():
         else:assert existing[path.name].get('digest')=='sha256:'+sha(path)
     (out/'manifest.json').write_bytes(payload);(out/'manifest.sha256').write_text(digest+'\n')
     result=dict(coverage=coverage,uploaded_bundles=uploaded,reused_bundles=len(wanted)-uploaded,
-        manifest_sha256=digest,manifest_asset_name=manifest_file.name,release_url=release['html_url'],
+        manifest_sha256=digest,manifest_asset_name=manifest_file.name,
+        manifest_download_url='https://github.com/'+REPOSITORY+'/releases/download/'+release['tag_name']+'/'+manifest_file.name,
+        release_url=release['html_url'],
         release_tag=release['tag_name'],assets={k:{n:v for n,v in row.items()if n in ['id','name','size','digest','browser_download_url']}for k,row in catalog.items()if k in wanted},
         public_players_switched=False)
     (out/'publication.json').write_bytes(canonical(result)+b'\n')
