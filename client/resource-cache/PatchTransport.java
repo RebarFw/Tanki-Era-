@@ -65,6 +65,12 @@ class PatchTransport {
   int preserved=0;
   for(int i=0;i<original.size();i++)if(Arrays.equals(original.get(i),a.bodies.get(i).getCodeBytes()))preserved++;
   if(changed!=3||preserved!=original.size()-3)throw new AssertionError("Unexpected original method changes");
+  // Keep the installed friendly progress copy when rebuilding the transport.
+  for(int i=1;i<a.constants.getStringCount();i++) {
+   String value=a.constants.getString(i);
+   if(value.equals("Resources: ")||value.equals("Resources: 0/0"))
+    a.constants.setString(i,"Getting things ready! First launch may take a few minutes. Next time will be faster! "+(value.endsWith("0/0")?"0/0":""));
+  }
   Files.write(work.resolve("patched-abc.bin"),bytes(a));
   Files.writeString(work.resolve("abc-verification.json"),"{\"tag_index\":"+tagIndex+",\"changed_original_methods\":3,\"other_original_methods_in_cache_tag_preserved\":"+preserved+",\"cache_directory_identity_unchanged\":true,\"github_only\":true,\"gameplay_methods_unchanged\":true,\"branch_offsets_valid\":true}\n");
   System.out.println("RELEASE_CACHE_TRANSPORT_BUILT original_methods_changed=3 github_only=true cache_identity_and_gameplay_preserved=true");System.exit(0);

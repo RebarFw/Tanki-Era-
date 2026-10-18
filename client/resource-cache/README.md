@@ -21,3 +21,5 @@ the client strips the fragment before HTTP and retains the original cache namesp
 HTTP, timeout, or integrity failure never triggers a game-server cache fallback.
 Published legacy cache endpoints return empty redirects; unknown cache paths return
 empty 404 responses. Local server source bytes remain for publishing and rollback.
+
+The progress label says "Getting things ready! First launch may take a few minutes. Next time will be faster!" followed by the live count. `UpdateLoadingText.java` applies this wording to the published GitHub-only library without modifying any method bodies. `PatchTransport.java` also retains the wording in future transport rebuilds.
