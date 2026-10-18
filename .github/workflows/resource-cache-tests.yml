@@ -1,0 +1,17 @@
+name: Resource cache pipeline checks
+on:
+  push:
+    paths: ["tools/resource-cache/**", "client/resource-cache/**", ".github/workflows/resource-cache-tests.yml"]
+  pull_request:
+    paths: ["tools/resource-cache/**", "client/resource-cache/**", ".github/workflows/resource-cache-tests.yml"]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python tools/resource-cache/test_pipeline.py -v

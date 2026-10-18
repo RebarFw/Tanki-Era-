@@ -1,0 +1,10 @@
+--- a/client/UserSocket.kt
++++ b/client/UserSocket.kt
+@@ -1127,2 +1127,2 @@
+-  private fun cacheManifestFile() = resourceManager.get("assets/resource-cache/v1/manifest.json")
+-  fun packageManifestSha(): String = resourceManager.get("assets/resource-cache/v1/manifest.sha256").toFile().readText().trim()
++  private fun cacheManifestFile() = resourceManager.get("assets/resource-cache/v1/manifest-${packageManifestSha()}.json")
++  fun packageManifestSha(): String = resourceManager.get("assets/resource-cache/v1/active-release.sha256").toFile().readText().trim()
+@@ -1146 +1146 @@
+-      Command(CommandName.PrepareResourceCache,clientBaseUrl+"assets/resource-cache/v1/manifest.json",sha,scope,ticket.id).send(this)
++      Command(CommandName.PrepareResourceCache,clientBaseUrl+"assets/resource-cache/v1/manifest-$sha.json",sha,scope,ticket.id).send(this)

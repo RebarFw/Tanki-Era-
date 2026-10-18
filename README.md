@@ -15,3 +15,14 @@ To publish game updates, update **assets/library.swf**, **assets/Loader.swf**, t
 The v1.3 bootstrap files are included in the ZIP. The older bootstrap assets and v1.2 rebuild source remain available for compatibility with earlier packages.
 
 [v1.3 launcher source and rebuild instructions](launcher/v1.3/README.md).
+
+## Resource cache downloads
+
+The client downloads verified resource bundles from [GitHub Releases](https://github.com/RebarFw/Tanki-Era-/releases/tag/resource-cache-v1).
+Bundles are content-addressed and players reuse local verified files, downloading
+only missing or changed content. A bounded original-server fallback remains for
+release-hosting failures. The game server supplies immutable control manifests;
+accounts and battle traffic stay on the game connection.
+
+See [resource publication](tools/resource-cache/README.md) and
+[v1.3 cache transport](client/resource-cache/README.md) for publishing and rollback.
