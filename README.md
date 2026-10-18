@@ -6,7 +6,7 @@ Extract the complete **Tanki Era v1,3** folder and open **Tanki Era.exe**.
 
 This testing release uses the current Tanki Era client, including the current full game library and clan module. The v1.2 package was used only as a reference for keeping the player folder small. The current executable, AIR runtime, icons and launcher artwork are retained. The library includes the latest Striker impact and spawn-input fixes.
 
-The game Loader, library and full clan module load from this repository. New versions are fetched when players reopen the game; players do not need a replacement ZIP for ordinary game-library updates. Maps, textures and sounds continue to load from the game server. The main game library is not bundled in the ZIP.
+Each launch resolves the latest GitHub commit and loads the game Loader, library and full clan module from that same revision. Players receive new game versions when they reopen the game; they do not need a replacement ZIP for ordinary game-library updates. Maps, textures and sounds continue to load from the game server. The main game library is not bundled in the ZIP.
 
 The small local ClanAddon.swf forwards the existing game interface to the full GitHub module. **assets/ClanAddon.swf must remain the full module**, not the small local entry.
 

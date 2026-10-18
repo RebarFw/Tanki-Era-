@@ -9,6 +9,9 @@ package protanki.launcher
    import flash.display.Sprite;
    import flash.events.Event;
    import flash.events.MouseEvent;
+   import flash.filesystem.File;
+   import flash.filesystem.FileMode;
+   import flash.filesystem.FileStream;
    import flash.geom.Point;
    import flash.geom.Rectangle;
    import flash.net.URLLoader;
@@ -61,6 +64,10 @@ package protanki.launcher
       private var window:NativeWindow;
 
       private var socketLoader:URLLoader;
+
+      private var releaseAssets:String;
+
+      private var releaseRevision:String;
 
       public function Prelauncher()
       {
@@ -174,12 +181,43 @@ package protanki.launcher
          this.airParameters["resources"] = this.resources;
          this.airParameters["swf"] = this.library;
          this.airParameters["lang"] = Locale.current.name;
-         this.socketLoader = new URLLoader();
-         this.socketLoader.dataFormat = "text";
-         this.socketLoader.addEventListener("complete",this.onSocketLoadingComplete);
-         this.socketLoader.addEventListener("ioError",this.onLoadingError);
-         this.socketLoader.addEventListener("securityError",this.onLoadingError);
-         this.socketLoader.load(new URLRequest(this.cacheBust(this.socketUrl)));
+         var releaseLoader:URLLoader = new URLLoader();
+         releaseLoader.dataFormat = "text";
+         releaseLoader.addEventListener("complete",this.onReleaseResolved);
+         releaseLoader.addEventListener("ioError",this.onLoadingError);
+         releaseLoader.addEventListener("securityError",this.onLoadingError);
+         releaseLoader.load(new URLRequest(this.cacheBust("https://api.github.com/repos/RebarFw/Tanki-Era-/git/ref/heads/main")));
+      }
+
+      private function onReleaseResolved(event:Event) : void
+      {
+         try
+         {
+            var ref:Object = JSON.parse(URLLoader(event.target).data);
+            var revision:String = String(ref.object.sha);
+            if(!/^[0-9a-f]{40}$/.test(revision)) throw new Error("Invalid GitHub revision");
+            this.releaseRevision = revision;
+            this.releaseAssets = "https://raw.githubusercontent.com/RebarFw/Tanki-Era-/" + revision + "/assets/";
+            this.swf = this.releaseAssets + "Loader.swf";
+            this.library = this.releaseAssets + "library.swf";
+            this.socketUrl = this.releaseAssets + "socket.cfg";
+            this.airParameters["swf"] = this.library;
+            this.airParameters["clientRevision"] = revision;
+            var pointer:FileStream = new FileStream();
+            pointer.open(File.applicationStorageDirectory.resolvePath("client-release.json"),FileMode.WRITE);
+            try { pointer.writeUTFBytes(JSON.stringify({revision:revision})); }
+            finally { pointer.close(); }
+            this.socketLoader = new URLLoader();
+            this.socketLoader.dataFormat = "text";
+            this.socketLoader.addEventListener("complete",this.onSocketLoadingComplete);
+            this.socketLoader.addEventListener("ioError",this.onLoadingError);
+            this.socketLoader.addEventListener("securityError",this.onLoadingError);
+            this.socketLoader.load(new URLRequest(this.socketUrl));
+         }
+         catch(error:Error)
+         {
+            this.onLoadingError(new Event("releaseError"));
+         }
       }
 
       private function onSocketLoadingComplete(param1:Event = null) : void
@@ -191,11 +229,11 @@ package protanki.launcher
          {
             this.airParameters["resources"] = _loc4_.resources;
          }
-         if(_loc4_.library != null && String(_loc4_.library).indexOf(GITHUB_ASSETS) == 0)
+         if(_loc4_.library != null && String(_loc4_.library).indexOf(this.releaseAssets) == 0)
          {
             this.airParameters["swf"] = _loc4_.library;
          }
-         if(_loc4_.loader != null && String(_loc4_.loader).indexOf(GITHUB_ASSETS) == 0)
+         if(_loc4_.loader != null && String(_loc4_.loader).indexOf(this.releaseAssets) == 0)
          {
             this.swf = _loc4_.loader;
          }
