@@ -9,7 +9,7 @@ This testing release uses the current Tanki Era client, including the current fu
 
 Each launch resolves the latest GitHub commit and loads the game Loader, library and full clan module from that same revision. Players receive new game versions when they reopen the game; they do not need a replacement ZIP for ordinary game-library updates. Maps, textures and sounds continue to load from the game server. The main game library is not bundled in the ZIP.
 
-Clicking **Play** opens the game in a maximized window that fits the desktop work area. Existing v1.3/v1.4 packages receive this startup fix through their downloaded game loader; no replacement ZIP is needed.
+The updated launcher prepares startup files in the background and shows the game only after its maximized window is ready. Existing installations need the updated portable package once for this launcher change; normal game-library updates continue to arrive automatically.
 
 The small local ClanAddon.swf forwards the existing game interface to the full GitHub module. **assets/ClanAddon.swf must remain the full module**, not the small local entry.
 

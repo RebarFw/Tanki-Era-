@@ -19,6 +19,8 @@ package protanki.launcher
    import flash.system.ApplicationDomain;
    import flash.system.LoaderContext;
    import flash.utils.ByteArray;
+   import flash.utils.getTimer;
+   import flash.text.TextField;
    import flash.utils.clearTimeout;
    import flash.utils.setTimeout;
    import protanki.launcher.controls.LocalizedControl;
@@ -40,6 +42,11 @@ package protanki.launcher
       private static const GITHUB_ASSETS:String = "https://raw.githubusercontent.com/RebarFw/Tanki-Era-/main/assets/";
 
       private var launchInProgress:Boolean = false;
+      private var launchRequested:Boolean = false;
+      private var preparedBytes:ByteArray;
+      private var preparedAt:int = 0;
+      private var startButton:StartButton;
+      private var gameWindowShown:Boolean = false;
 
       private var guiLayer:Sprite;
 
@@ -100,6 +107,7 @@ package protanki.launcher
          Locale.current = Storage.getLastSessionLocale(this.defaultLocale);
          this.configureStage();
          this.createGUI();
+         this.prepareLaunch();
       }
 
       private function setCenterPosition() : void
@@ -129,6 +137,7 @@ package protanki.launcher
       {
          this.guiLayer = new Sprite();
          var _loc6_:StartButton = new StartButton(this.startPressed);
+         this.startButton = _loc6_;
          var _loc1_:ExitButton = new ExitButton();
          var _loc7_:Logo = new Logo();
          var _loc5_:Background = new Background();
@@ -173,10 +182,25 @@ package protanki.launcher
 
       private function startPressed(param1:MouseEvent = null) : void
       {
+         if(this.launchRequested) return;
+         this.launchRequested = true;
+         this.setStartBusy(true);
+         Storage.lastSessionLocale = Locales.list.indexOf(Locale.current.name);
+         if(this.preparedBytes != null && getTimer() - this.preparedAt <= 10000)
+         {
+            this.loadPreparedGame();
+         }
+         else if(!this.launchInProgress)
+         {
+            this.prepareLaunch();
+         }
+      }
+
+      private function prepareLaunch() : void
+      {
          if(this.launchInProgress) return;
          this.launchInProgress = true;
-         stage.nativeWindow.visible = true;
-         Storage.lastSessionLocale = Locales.list.indexOf(Locale.current.name);
+         this.preparedBytes = null;
          this.airParameters = {};
          this.airParameters["resources"] = this.resources;
          this.airParameters["swf"] = this.library;
@@ -190,6 +214,24 @@ package protanki.launcher
          releaseRequest.useCache = false;
          releaseRequest.cacheResponse = false;
          releaseLoader.load(releaseRequest);
+      }
+
+      private function setStartBusy(busy:Boolean) : void
+      {
+         if(this.startButton == null) return;
+         this.startButton.mouseEnabled = !busy;
+         this.startButton.mouseChildren = !busy;
+         this.selector.mouseEnabled = !busy;
+         this.selector.mouseChildren = !busy;
+         for(var i:int = 0; i < this.startButton.numChildren; i++)
+         {
+            var label:TextField = this.startButton.getChildAt(i) as TextField;
+            if(label != null)
+            {
+               label.text = busy ? "Opening..." : Locale.current.playText;
+               label.x = -label.getLineMetrics(0).width >> 1;
+            }
+         }
       }
 
       private function onReleaseResolved(event:Event) : void
@@ -253,29 +295,45 @@ package protanki.launcher
       private function onConnectError(param1:Event = null) : void
       {
          this.launchInProgress = false;
+         this.launchRequested = false;
+         this.preparedBytes = null;
+         this.setStartBusy(false);
          stage.nativeWindow.visible = true;
       }
 
       private function onLoadingError(param1:Event) : void
       {
+         var requested:Boolean = this.launchRequested;
          this.launchInProgress = false;
-         Alert.showMessage("Connection error!");
+         this.launchRequested = false;
+         this.preparedBytes = null;
+         this.setStartBusy(false);
+         if(requested) Alert.showMessage("Connection error!");
          stage.nativeWindow.visible = true;
       }
 
       private function byteArrayLoadComplete(param1:Event) : void
       {
-         var _loc4_:LoaderInfo = null;
-         var _loc2_:ByteArray = param1.target.data as ByteArray;
+         this.preparedBytes = param1.target.data as ByteArray;
+         this.preparedAt = getTimer();
+         this.launchInProgress = false;
+         if(this.launchRequested) this.loadPreparedGame();
+      }
+
+      private function loadPreparedGame() : void
+      {
+         if(this.preparedBytes == null) return;
+         this.launchInProgress = true;
+         this.airParameters["lang"] = Locale.current.name;
          this.tanksLauncherLoader = new Loader();
-         var _loc3_:LoaderContext = new LoaderContext(false,new ApplicationDomain(ApplicationDomain.currentDomain));
-         _loc3_.parameters = this.airParameters;
-         _loc4_ = this.tanksLauncherLoader.contentLoaderInfo;
-         _loc4_.addEventListener("complete",this.onLauncherLoadingComplete,false,0,true);
-         _loc4_.addEventListener("ioError",this.onLoadingError,false,0,true);
-         _loc4_.addEventListener("securityError",this.onLoadingError,false,0,true);
-         _loc3_.allowCodeImport = true;
-         this.tanksLauncherLoader.loadBytes(_loc2_,_loc3_);
+         var context:LoaderContext = new LoaderContext(false,new ApplicationDomain(ApplicationDomain.currentDomain));
+         context.parameters = this.airParameters;
+         context.allowCodeImport = true;
+         var info:LoaderInfo = this.tanksLauncherLoader.contentLoaderInfo;
+         info.addEventListener("complete",this.onLauncherLoadingComplete,false,0,true);
+         info.addEventListener("ioError",this.onLoadingError,false,0,true);
+         info.addEventListener("securityError",this.onLoadingError,false,0,true);
+         this.tanksLauncherLoader.loadBytes(this.preparedBytes,context);
       }
 
       private function mouseClick(param1:MouseEvent) : void
@@ -288,10 +346,10 @@ package protanki.launcher
 
       private function onLauncherLoadingComplete(param1:Event) : void
       {
-         var _loc2_:NativeWindowInitOptions = new NativeWindowInitOptions();
-         _loc2_.renderMode = "direct";
-         _loc2_.maximizable = true;
-         this.window = new NativeWindow(_loc2_);
+         var options:NativeWindowInitOptions = new NativeWindowInitOptions();
+         options.renderMode = "direct";
+         options.maximizable = true;
+         this.window = new NativeWindow(options);
          this.window.minSize = new Point(1024,768);
          this.window.maxSize = new Point(4095,2880);
          this.window.stage.addChild(new LauncherContainer(this.tanksLauncherLoader,this));
@@ -301,8 +359,8 @@ package protanki.launcher
          this.window.addEventListener("move",this.saveDisplayStateDelayed);
          this.window.addEventListener("resize",this.saveDisplayStateDelayed);
          this.window.addEventListener("displayStateChange",this.saveDisplayStateDelayed);
+         this.window.addEventListener("displayStateChange",this.onGameWindowReady);
          this.loadDisplayState();
-         stage.nativeWindow.visible = false;
       }
 
       private function onClosing(param1:Event) : void
@@ -322,30 +380,30 @@ package protanki.launcher
       private function loadDisplayState() : void
       {
          this.displayStateTimeout = 0;
-         var _loc1_:DisplayState = Storage.getDisplayState();
-         var _loc3_:Point = new Point(_loc1_.x,_loc1_.y);
-         var _loc2_:Point = new Point(_loc1_.width,_loc1_.height);
-         var _loc4_:Boolean = _loc1_.fullscreen;
-         if(pointIsVisibleOnScreens(_loc3_,Screen.screens))
+         var saved:DisplayState = Storage.getDisplayState();
+         var position:Point = new Point(saved.x,saved.y);
+         if(pointIsVisibleOnScreens(position,Screen.screens))
          {
-            this.window.y = _loc3_.y;
-            this.window.x = _loc3_.x;
-            if(_loc4_)
-            {
-               this.setDefaultWindowSize();
-               this.window.stage.displayState = "fullScreenInteractive";
-            }
-            else
-            {
-               this.window.width = _loc2_.x;
-               this.window.height = _loc2_.y;
-            }
+            this.window.x = position.x;
+            this.window.y = position.y;
          }
          else
          {
             this.setDefaultWindowSize();
          }
+         this.window.stage.displayState = "normal";
+         this.window.maximize();
+         this.onGameWindowReady();
+      }
+
+      private function onGameWindowReady(event:Event = null) : void
+      {
+         if(this.gameWindowShown || this.window == null || this.window.displayState != "maximized") return;
+         this.gameWindowShown = true;
+         this.window.removeEventListener("displayStateChange",this.onGameWindowReady);
          this.window.visible = true;
+         this.window.activate();
+         stage.nativeWindow.visible = false;
       }
 
       private function setDefaultWindowSize() : void

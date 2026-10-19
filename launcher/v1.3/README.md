@@ -12,7 +12,11 @@ The packaged executable/runtime are the existing current files. No certificate, 
 
 ## Game window startup
 
-The downloaded game Loader queues native-window maximization immediately during stage configuration, before the packaged Prelauncher shows the game window. Its first game frame is already maximized in normal windowed mode. A one-shot first-frame check handles saved fullscreen preferences. Restoring, resizing and manually toggling fullscreen remain available afterward. The helper source is in `launcher/shared/MaximizedGameWindow.as`.
+The packaged Prelauncher checks GitHub and prepares the small game Loader while its launcher screen is open. Clicking Play uses those prepared bytes when recent, with immediate `Opening...` feedback if preparation is still pending. Preparation older than ten seconds is refreshed before starting, and the selected language is applied when the game is loaded. Background-preparation errors do not open an alert before Play is pressed.
+
+The game window stays hidden until AIR reports its native window state as maximized. Only then is the game shown and the launcher hidden. This removes the visible normal-to-maximized transition. The stage remains windowed; restoring, resizing and the existing fullscreen button still work.
+
+This improvement changes the local Prelauncher. Existing users should replace their portable folder with the updated ZIP once. The application ID, runtime, executable, artwork and clan entry are preserved, and ordinary game updates still stream from the latest pinned GitHub revision.
 
 ## Rebuild
 
