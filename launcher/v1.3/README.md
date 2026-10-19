@@ -10,6 +10,10 @@ The full game library is the current owner client library, including the Striker
 
 The packaged executable/runtime are the existing current files. No certificate, installer, administrator setting or security-setting change is required by this build.
 
+## Game window startup
+
+The downloaded game Loader schedules `MaximizedGameWindow` once on its first frame, after the packaged Prelauncher has restored its saved window bounds. It maximizes the game window through AIR while keeping its stage in normal windowed mode. Restoring, resizing and manually toggling fullscreen remain available afterward. The helper source is in `launcher/shared/MaximizedGameWindow.as`.
+
 ## Rebuild
 
 Use the current client game folder as the template. Requires Python 3, Java, FFDec and the trusted AIR/Flex SDK already used for the client.
