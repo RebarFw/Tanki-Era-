@@ -12,7 +12,7 @@ The packaged executable/runtime are the existing current files. No certificate, 
 
 ## Game window startup
 
-The downloaded game Loader schedules `MaximizedGameWindow` once on its first frame, after the packaged Prelauncher has restored its saved window bounds. It maximizes the game window through AIR while keeping its stage in normal windowed mode. Restoring, resizing and manually toggling fullscreen remain available afterward. The helper source is in `launcher/shared/MaximizedGameWindow.as`.
+The downloaded game Loader queues native-window maximization immediately during stage configuration, before the packaged Prelauncher shows the game window. Its first game frame is already maximized in normal windowed mode. A one-shot first-frame check handles saved fullscreen preferences. Restoring, resizing and manually toggling fullscreen remain available afterward. The helper source is in `launcher/shared/MaximizedGameWindow.as`.
 
 ## Rebuild
 

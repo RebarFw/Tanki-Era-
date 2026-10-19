@@ -5,20 +5,26 @@ package era2019.startup {
 
  public class MaximizedGameWindow extends Sprite {
   public static function schedule(host:Sprite):void {
+   // Queue the native maximize before the packaged launcher shows the window.
+   maximize(host);
    var firstFrame:Function;
    firstFrame=function(event:Event):void {
     if(host.stage==null)return;
     host.removeEventListener(Event.ENTER_FRAME,firstFrame);
-    try {
-     var window:Object=host.stage["nativeWindow"];
-     if(window==null||!window.maximizable)return;
-     if(host.stage.displayState!=StageDisplayState.NORMAL)host.stage.displayState=StageDisplayState.NORMAL;
-     window.maximize();
-    }catch(unavailable:Error){}
+    // Handle a saved fullscreen preference without remaximizing later restores.
+    maximize(host);
    };
-   // The package restores its saved bounds after adding the game loader.
-   // Run once on the next frame, after that restoration has completed.
    host.addEventListener(Event.ENTER_FRAME,firstFrame);
+  }
+
+  private static function maximize(host:Sprite):void {
+   if(host.stage==null)return;
+   try {
+    var window:Object=host.stage["nativeWindow"];
+    if(window==null||!window.maximizable)return;
+    if(host.stage.displayState!=StageDisplayState.NORMAL)host.stage.displayState=StageDisplayState.NORMAL;
+    if(window.displayState!="maximized")window.maximize();
+   }catch(unavailable:Error){}
   }
  }
 }
