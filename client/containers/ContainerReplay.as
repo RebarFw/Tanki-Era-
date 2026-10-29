@@ -28,6 +28,7 @@ package era2019.containers {
    showClose(r);
   }
   private static function showClose(r:Object):void{if(r.close!=null&&r.window!=null&&r.close.parent!=r.window)r.window.addChild(r.close as DisplayObject);}
+  private static function hideClose(r:Object):void{if(r.close!=null&&r.close.parent!=null)r.close.parent.removeChild(r.close as DisplayObject);}
   private static function watch(d:Object,r:Object):void {
    if(r.timer)clearInterval(r.timer);
    var g:int=r.generation;var id:uint=0;
@@ -39,11 +40,11 @@ package era2019.containers {
    var b:Object=event.currentTarget;if(b==null||b.parent!=panel||!b.enabled)return false;
    var count:int=r.known?r.count:boxes,amount:int=int(b.count);if(amount<=0||amount>count)return false;
    cleanup(r);hideStatus(r);r.count=count-amount;r.known=true;r.phase='server';r.started=getTimer();r.generation++;r.requestId=null;r.send=null;r.amount=amount;
-   var g:int=r.generation;watch(d,r);setTimeout(function():void{if(valid(d,r,g)&&r.phase=='server'){showClose(r);status(r,'Waiting for rewards…');}},0);
+   var g:int=r.generation;watch(d,r);setTimeout(function():void{if(valid(d,r,g)&&r.phase=='server'){hideClose(r);status(r,'Waiting for rewardsâ€¦');}},0);
    return true;
   }
   public static function request(d:Object,id:String,amount:int,send:Function):void {
-   if(d==null)return;var r:Object=record(d);r.requestId=id;r.amount=amount;r.send=send;r.phase='server';r.started=getTimer();showClose(r);status(r,'Waiting for rewards…');
+   if(d==null)return;var r:Object=record(d);r.requestId=id;r.amount=amount;r.send=send;r.phase='server';r.started=getTimer();hideClose(r);status(r,'Waiting for rewardsâ€¦');
   }
   private static function status(r:Object,text:String):void {
    if(r.window==null)return;
@@ -53,12 +54,11 @@ package era2019.containers {
   private static function hideStatus(r:Object):void {if(r.status!=null&&r.status.parent!=null)r.status.parent.removeChild(r.status);if(r.retry!=null&&r.retry.parent!=null)r.retry.parent.removeChild(r.retry);}
   private static function retry(d:Object,r:Object):void {
    if(r.requestId==null||r.send==null)return;
-   if(r.retry==null){var C:Class=getDefinitionByName('controls.buttons.h50px.GreyBigButton')as Class;var b:Object=new C();b.label='Retry';b.width=130;b.x=r.panel.x;b.y=r.panel.y;b.addEventListener(MouseEvent.CLICK,function(e:MouseEvent):void{if(records[d]!==r||r.phase!='server'||getTimer()-r.started<REQUEST_WAIT)return;r.started=getTimer();hideStatus(r);status(r,'Retrying the same opening…');try{r.send('garage;containers_open;'+r.amount+';'+r.requestId);}catch(error:Error){status(r,'Connection unavailable. You can close this window.');}});r.retry=b;}
+   if(r.retry==null){var C:Class=getDefinitionByName('controls.buttons.h50px.GreyBigButton')as Class;var b:Object=new C();b.label='Retry';b.width=130;b.x=r.panel.x;b.y=r.panel.y;b.addEventListener(MouseEvent.CLICK,function(e:MouseEvent):void{if(records[d]!==r||r.phase!='server'||getTimer()-r.started<REQUEST_WAIT)return;r.started=getTimer();hideStatus(r);hideClose(r);status(r,'Retrying the same openingâ€¦');try{r.send('garage;containers_open;'+r.amount+';'+r.requestId);}catch(error:Error){showClose(r);status(r,'Connection unavailable. You can close this window.');}});r.retry=b;}
    if(r.retry.parent!=r.window)r.window.addChild(r.retry);
   }
   private static function tick(d:Object,r:Object,g:int):void {
-   showClose(r);
-   if(r.phase=='server'&&getTimer()-r.started>=REQUEST_WAIT){status(r,'Still waiting for rewards. Retry or Close.');retry(d,r);}
+   if(r.phase=='server'&&getTimer()-r.started>=REQUEST_WAIT){showClose(r);status(r,'Still waiting for rewards. Retry or Close.');retry(d,r);}
    else if(r.phase=='images')checkImages(d,r,g,getTimer()-r.started>=PREVIEW_WAIT);
    else if(r.phase=='displaying'&&getTimer()-r.started>Math.max(30000,r.rewardCount*8000+20000))renderError(d,new Error('Reward animation timed out'));
   }
@@ -69,7 +69,7 @@ package era2019.containers {
   public static function inventory(panel:Object,item:Object,rows:Array,apply:Function):void {if(rows==null)return;for each(var row:Object in rows){try{apply(panel,item,[row]);}catch(e:Error){}}}
   public static function prepare(d:Object,rewards:Object,start:Function):void {
    var r:Object=record(d);cleanupResources(r);hideStatus(r);r.phase='images';r.started=getTimer();r.rewards=rewards;r.rewardCount=rewards.length;r.start=start;r.entries=[];
-   var g:int=r.generation;showClose(r);watch(d,r);status(r,'Loading reward previews…');
+   var g:int=r.generation;hideClose(r);watch(d,r);status(r,'Loading reward previewsâ€¦');
    if(rewards.length==0){renderError(d,new Error('No rewards to display'));return;}
    r.collecting=true;var seen:Dictionary=new Dictionary(true);
    for each(var reward:Object in rewards){
