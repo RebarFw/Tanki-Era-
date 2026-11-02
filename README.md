@@ -13,6 +13,8 @@ The updated launcher prepares startup files in the background and shows the game
 
 The small local ClanAddon.swf forwards the existing game interface to the full GitHub module. **assets/ClanAddon.swf must remain the full module**, not the small local entry.
 
+The player library has desktop/file diagnostics disabled. Developer libraries keep their local logging; apply the [public-library diagnostics converter](client/diagnostics/README.md) before publishing future developer builds.
+
 To publish game updates, update **assets/library.swf**, **assets/Loader.swf**, the full **assets/ClanAddon.swf**, and public **assets/socket.cfg** as needed. Keep related updates in one commit. Do not upload local connection settings, server databases, account records, passwords or admin configuration.
 
 The v1.3 bootstrap files are included in the ZIP. The older bootstrap assets and v1.2 rebuild source remain available for compatibility with earlier packages.
