@@ -19,7 +19,7 @@ package era2019.mineload {
      // A late visual update must not discard later initialization frames or
      // a mine-snapshot receipt in this same TCP read. Model/auth/resource
      // failures retain their original fatal handling.
-     if(!(error is TypeError)||['change_spec_tank','change_temperature_tank','enable_effect','disable_effect','kill_tank','die'].indexOf(args[0])<0)throw error;
+     if(kind!=Type.BATTLE||!(error is TypeError)||['change_spec_tank','change_temperature_tank','enable_effect','disable_effect','kill_tank','die','start_fire','stop_fire','shot','static_shot','dummy_shot','target_shot','rotateTurret','movementControl','move','fullMove'].indexOf(args[0])<0)throw error;
      ClientLog.write('BattlePacketError',String(args[0])+': '+error.toString()+'\n'+error.getStackTrace());
     }
     start=end+4;
