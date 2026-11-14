@@ -6,6 +6,8 @@ is never overwritten. New manifests reference existing assets for unchanged
 bundles. Releases roll over before the 1,000-asset limit; older assets remain
 available for old manifests and rollback.
 
+The publisher also uploads lossless zlib variants when they save at least 32 KiB. The manifest references both representations so existing clients can still request the original TEPK files.
+
 Manifests and all cache bundles download exclusively from GitHub Releases. The
 game connection supplies the immutable manifest URL and its expected SHA-256.
 A URL fragment carries the original local cache identity and is stripped before

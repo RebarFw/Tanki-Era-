@@ -58,7 +58,7 @@ def refresh(cache_root,static_root):
         header=canonical(dict(files=rows,format=1));binary=b'TEPK\x01'+struct.pack('>I',len(header))+header+payload
         digest=hashlib.sha256(binary).hexdigest();relative='packages/'+digest+'.tpk'
         atomic(cache_root/relative,binary)
-        package.update(path=relative,sha256=digest,size=len(binary),version=digest);package.pop('url',None)
+        package.update(path=relative,sha256=digest,size=len(binary),version=digest);package.pop('url',None);package.pop('zlib',None)
         changed.append(package_name)
     if changed or canonical(manifest)!=original_manifest:
         manifest['version']=hashlib.sha256(canonical({k:v for k,v in manifest.items()if k!='version'})).hexdigest()

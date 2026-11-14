@@ -5,11 +5,25 @@ written to a manifest, receipt, command argument, or client file.
 """
 from __future__ import annotations
 import argparse, concurrent.futures, hashlib, http.client, json, os, pathlib
-import re, struct, subprocess, threading, time, urllib.error, urllib.parse, urllib.request
+import re, struct, subprocess, threading, time, urllib.error, urllib.parse, urllib.request, zlib
 
 REPOSITORY = 'RebarFw/Tanki-Era-'
 API = 'https://api.github.com/repos/' + REPOSITORY
 HASH = re.compile(r'^[0-9a-f]{64}$')
+MIN_COMPRESSION_SAVINGS = 32 * 1024
+
+
+def compressed_bundle(source, output):
+    original = source.read_bytes()
+    compressed = zlib.compress(original, level=6)
+    if len(original) - len(compressed) < MIN_COMPRESSION_SAVINGS:
+        return None
+    assert zlib.decompress(compressed) == original
+    digest = hashlib.sha256(compressed).hexdigest()
+    path = output / (digest + '.tpk.zlib')
+    path.write_bytes(compressed)
+    return digest, path
+
 
 def canonical(value):
     return json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True).encode()
@@ -160,13 +174,21 @@ def main():
     for release in releases:
         if re.fullmatch(r'resource-cache-v\d+',release['tag_name']):
             for asset in github.assets(release['id']):
-                if re.fullmatch(r'[0-9a-f]{64}\.tpk',asset['name']) and asset['state']=='uploaded':
-                    digest=asset['name'][:-4]
+                if re.fullmatch(r'[0-9a-f]{64}\.tpk(?:\.zlib)?',asset['name']) and asset['state']=='uploaded':
+                    digest=asset['name'].split('.', 1)[0]
                     if asset.get('digest'):assert asset['digest']=='sha256:'+digest
                     catalog[digest]=asset
     wanted={p['sha256']:root/p['path']for p in manifest['packages'].values()}
-    pending={k:p for k,p in wanted.items()if k not in catalog}
-    print('RELEASE_UPLOAD_PLAN missing='+str(len(pending))+' reusable='+str(len(wanted)-len(pending)),flush=True)
+    compressed = {}
+    compressed_dir = out / 'compressed'
+    compressed_dir.mkdir(exist_ok=True)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        for digest, result in zip(wanted, executor.map(lambda path: compressed_bundle(path, compressed_dir), wanted.values())):
+            if result is not None:
+                compressed[digest] = result
+    all_assets = {**wanted, **dict(compressed.values())}
+    pending={k:p for k,p in all_assets.items()if k not in catalog}
+    print('RELEASE_UPLOAD_PLAN missing='+str(len(pending))+' reusable='+str(len(all_assets)-len(pending)),flush=True)
     number=max([int(r['tag_name'].rsplit('v',1)[1])for r in releases if re.fullmatch(r'resource-cache-v\d+',r['tag_name'])]+[1])
     release=github.release('resource-cache-v'+str(number))
     if len(github.assets(release['id']))+len(pending)+3>950:
@@ -194,6 +216,12 @@ def main():
         assert row['size']==p['size']
         p['url']=row['browser_download_url']
         assert p['url'].startswith('https://github.com/'+REPOSITORY+'/releases/download/resource-cache-v')
+        p.pop('zlib', None)
+        if p['sha256'] in compressed:
+            compressed_sha, path = compressed[p['sha256']]
+            variant = catalog[compressed_sha]
+            assert variant['size'] == path.stat().st_size
+            p['zlib'] = dict(sha256=compressed_sha, size=variant['size'], url=variant['browser_download_url'])
     candidate['transport']={'format':1,'primary':'github-releases','mode':'github-only','fallback':None}
     candidate['version']=hashlib.sha256(canonical({k:v for k,v in candidate.items()if k!='version'})).hexdigest()
     payload=canonical(candidate);digest=hashlib.sha256(payload).hexdigest()
@@ -204,11 +232,11 @@ def main():
         if path.name not in existing:github.upload(release['id'],path)
         else:assert existing[path.name].get('digest')=='sha256:'+sha(path)
     (out/'manifest.json').write_bytes(payload);(out/'manifest.sha256').write_text(digest+'\n')
-    result=dict(coverage=coverage,uploaded_bundles=uploaded,reused_bundles=len(wanted)-uploaded,
+    result=dict(coverage=coverage,uploaded_bundles=uploaded,reused_bundles=len(all_assets)-uploaded,
         manifest_sha256=digest,manifest_asset_name=manifest_file.name,
         manifest_download_url='https://github.com/'+REPOSITORY+'/releases/download/'+release['tag_name']+'/'+manifest_file.name,
         release_url=release['html_url'],
-        release_tag=release['tag_name'],assets={k:{n:v for n,v in row.items()if n in ['id','name','size','digest','browser_download_url']}for k,row in catalog.items()if k in wanted},
+        release_tag=release['tag_name'],assets={k:{n:v for n,v in row.items()if n in ['id','name','size','digest','browser_download_url']}for k,row in catalog.items()if k in all_assets},
         public_players_switched=False)
     (out/'publication.json').write_bytes(canonical(result)+b'\n')
     print('RESOURCE_CACHE_RELEASE_READY '+release['html_url']+' manifest_sha256='+digest,flush=True)
