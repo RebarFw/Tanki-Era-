@@ -1,34 +1,20 @@
+# Tanki Era v1.4
 
-# Tanki Era v1.3
+[Download Tanki Era v1.4 for Windows](https://github.com/RebarFw/Tanki-Era-/raw/refs/heads/main/downloads/Tanki-Era-v1.4.zip)
 
-[Download Tanki Era v1.3 for Windows](https://github.com/RebarFw/Tanki-Era-/raw/refs/heads/main/downloads/Tanki-Era-v1.3.zip)
+Extract the **Tanki Era v1,4** folder and open **Tanki Era.exe**.
 
-Extract the complete **Tanki Era v1,3** folder and open **Tanki Era.exe**.
+## What's new
 
-This testing release uses the current Tanki Era client, including the current full game library and clan module. The v1.2 package was used only as a reference for keeping the player folder small. The current executable, AIR runtime, icons and launcher artwork are retained. The library includes the latest Striker impact and spawn-input fixes.
+- **FPS cap.** Use **Settings → Game** to choose 60–240 FPS in steps of 10 for hardware-accelerated battles. The HUD shows a one-second average of measured FPS.
+- **Controls.** You can rebind **Show protections and alterations** directly below **Shoot**. Hold the assigned key to show the overlay. The number-row supply keys follow the bindings saved in Controls.
+- **Clicker.** The settings use the standard gray panel style. Apply briefly shows **Applied**, and notifications identify the profile with **Started** or **Stopped**.
+- **Launcher cache.** The compact launcher verifies the game library against the checksum for its pinned GitHub revision. It reuses the file whenever the checksum matches and keeps the current and one previous library.
 
-Each launch resolves the latest GitHub commit and loads the game Loader, library and full clan module from that same revision. Players receive new game versions when they reopen the game; they do not need a replacement ZIP for ordinary game-library updates. Maps, textures and sounds continue to load from the game server. The main game library is not bundled in the ZIP.
+## Resource downloads
 
-The updated launcher prepares startup files in the background and shows the game only after its maximized window is ready. Existing installations need the updated portable package once for this launcher change; normal game-library updates continue to arrive automatically.
+The client supports a smaller login download with the matching progressive-cache server update. Maps, tank assets and garage previews then download when needed. The game server supplies the verified manifest, and the packages come from [GitHub Releases](https://github.com/RebarFw/Tanki-Era-/releases/tag/resource-cache-v1). Verified cached content is reused across launches and updates.
 
-The small local ClanAddon.swf forwards the existing game interface to the full GitHub module. **assets/ClanAddon.swf must remain the full module**, not the small local entry.
+The launcher and game assets resolve to the same GitHub commit. Reopen the game to receive ordinary library updates. The portable v1.4 ZIP is the one-time update for the launcher cache.
 
-The player library has desktop/file diagnostics disabled. Developer libraries keep their local logging; apply the [public-library diagnostics converter](client/diagnostics/README.md) before publishing future developer builds.
-
-To publish game updates, update **assets/library.swf**, **assets/Loader.swf**, the full **assets/ClanAddon.swf**, and public **assets/socket.cfg** as needed. Keep related updates in one commit. Do not upload local connection settings, server databases, account records, passwords or admin configuration.
-
-The v1.3 bootstrap files are included in the ZIP. The older bootstrap assets and v1.2 rebuild source remain available for compatibility with earlier packages.
-
-[v1.3 launcher source and rebuild instructions](launcher/v1.3/README.md).
-
-## Resource cache downloads
-
-The client downloads verified resource bundles from [GitHub Releases](https://github.com/RebarFw/Tanki-Era-/releases/tag/resource-cache-v1).
-Bundles are content-addressed and players reuse local verified files, downloading
-only missing or changed content. Manifests and bundles are hosted only on GitHub,
-with no game-server cache fallback. Legacy cache URLs redirect without sending
-bundle bytes. The game connection supplies the verified GitHub manifest URL;
-accounts and battle traffic stay on the game connection.
-
-See [resource publication](tools/resource-cache/README.md) and
-[v1.3 cache transport](client/resource-cache/README.md) for publishing and rollback.
+[Previous v1.3 Windows ZIP](https://github.com/RebarFw/Tanki-Era-/raw/refs/heads/main/downloads/Tanki-Era-v1.3.zip) · [Resource publication and rollback](tools/resource-cache/README.md) · [Cache transport](client/resource-cache/README.md)

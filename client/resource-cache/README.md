@@ -43,3 +43,11 @@ with AIR's MXMLC (target player 11.3 and SWF version 16). Run
 `PatchPackageQueue.java` on the FFDec 26.2.1 classpath with the input library,
 compiled helper SWF and output library as arguments. Only the cache ABC
 is changed.
+
+## v1.4 staged startup
+
+The v1.4 player library can negotiate the progressive cache flow with a matching
+server. Only startup resources block lobby entry. The client downloads required
+map and equipment assets when requested and reuses verified disk content across
+manifest generations. Older servers continue to request the original common scope.
+The v1.4 portable launcher separately reuses its verified game library by checksum.
